@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-pkgz/auth/v2"
 	"github.com/go-pkgz/auth/v2/avatar"
+	authProvider "github.com/go-pkgz/auth/v2/provider"
 	"github.com/go-pkgz/auth/v2/token"
 	"github.com/vaporii/v8box/internal/config"
 	"github.com/vaporii/v8box/internal/config/provider"
@@ -28,10 +29,13 @@ func RegisterHandlers(router chi.Router, cfg *config.Config) (*auth.Service, err
 		return nil, err
 	}
 	service.AddProvider(githubCfg.ProviderName, githubCfg.ClientID, githubCfg.ClientSecret)
+	service.AddDirectProvider("local", authProvider.CredCheckerFunc(func(user string, password string) (ok bool, err error) {
+		return true, nil
+	}))
 
 	authRoutes, avaRoutes := service.Handlers()
-	router.Mount("/auth", authRoutes)
-	router.Mount("/avatar", avaRoutes)
+	router.Mount("/api/v1/auth", authRoutes)
+	router.Mount("/api/v1/avatar", avaRoutes)
 
 	return service, nil
 }
