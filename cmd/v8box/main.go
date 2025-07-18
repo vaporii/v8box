@@ -59,6 +59,7 @@ func setupRouter(cfg *config.Config) (*chi.Mux, error) {
 	m := service.Middleware()
 
 	r.Post("/register", userHandler.Register)
+	r.Post("/register/oauth", userHandler.RegisterOAuth)
 	r.With(m.Auth).Post("/note", noteHandler.Create)
 
 	return r, nil

@@ -34,8 +34,8 @@ func RegisterHandlers(router chi.Router, cfg *config.Config) (*auth.Service, err
 	}))
 
 	authRoutes, avaRoutes := service.Handlers()
-	router.Mount("/api/v1/auth", authRoutes)
-	router.Mount("/api/v1/avatar", avaRoutes)
+	router.Mount("/auth", authRoutes)
+	router.Mount("/avatar", avaRoutes)
 
 	return service, nil
 }
