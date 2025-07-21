@@ -16,9 +16,10 @@ type Config struct {
 	ServerAddress  string
 	SQLitePath     string
 	Environment    string
+	JwtSecret      string
 }
 
-func LoadConfig() (*Config, error) {
+func LoadConfig() *Config {
 	return &Config{
 		TokenDuration:  5 * time.Minute,
 		CookieDuration: 24 * time.Hour,
@@ -30,7 +31,8 @@ func LoadConfig() (*Config, error) {
 		ServerAddress:  getEnv("V8BOX_ADDRESS", ":3000"),
 		SQLitePath:     getEnv("V8BOX_SQLITE_PATH", "./dev.db"),
 		Environment:    getEnv("V8BOX_ENVIRONMENT", "dev"),
-	}, nil
+		JwtSecret:      getEnv("V8BOX_JWT_SECRET", ""),
+	}
 }
 
 func getEnv(key, defaultValue string) string {

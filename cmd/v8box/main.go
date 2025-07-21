@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/vaporii/v8box/internal/auth"
 	"github.com/vaporii/v8box/internal/config"
+	"github.com/vaporii/v8box/internal/middleware"
 
 	"github.com/vaporii/v8box/internal/handler"
 	"github.com/vaporii/v8box/internal/repository"
@@ -15,11 +15,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatalf("err: %v\n", err)
-		return
-	}
+	cfg := config.LoadConfig()
 
 	r, err := setupRouter(cfg)
 	if err != nil {
@@ -41,7 +37,7 @@ func setupRouter(cfg *config.Config) (*chi.Mux, error) {
 	if err != nil {
 		return nil, err
 	}
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, *config.LoadConfig())
 	userHandler := handler.NewUserHandler(userService)
 
 	noteRepo, err := repository.NewNoteRepository(db)
@@ -49,18 +45,12 @@ func setupRouter(cfg *config.Config) (*chi.Mux, error) {
 		return nil, err
 	}
 	noteService := service.NewNoteService(noteRepo)
-	noteHandler := handler.NewNoteHandler(noteService)
-
-	service, err := auth.RegisterHandlers(r, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	m := service.Middleware()
+	_ = handler.NewNoteHandler(noteService)
 
 	r.Post("/register", userHandler.Register)
-	r.Post("/register/oauth", userHandler.RegisterOAuth)
-	r.With(m.Auth).Post("/note", noteHandler.Create)
+	r.Get("/register/oauth", userHandler.GitHubOAuthLogin)
+	r.Get("/callback", userHandler.GitHubOAuthCallback)
+	r.With(middleware.Auth).Get("/user", userHandler.GetUser)
 
 	return r, nil
 }
