@@ -2,7 +2,10 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"time"
+
+	"github.com/vaporii/v8box/internal/logging"
 )
 
 type Config struct {
@@ -17,6 +20,8 @@ type Config struct {
 	SQLitePath     string
 	Environment    string
 	JwtSecret      string
+	// none, error, warning, info, verbose
+	Logging logging.LogLevel
 }
 
 func LoadConfig() *Config {
@@ -32,6 +37,7 @@ func LoadConfig() *Config {
 		SQLitePath:     getEnv("V8BOX_SQLITE_PATH", "./dev.db"),
 		Environment:    getEnv("V8BOX_ENVIRONMENT", "dev"),
 		JwtSecret:      getEnv("V8BOX_JWT_SECRET", ""),
+		Logging:        logging.LogLevel(getEnvAsInt("V8BOX_LOGGING", int(logging.LogLevelWarning))),
 	}
 }
 
@@ -45,6 +51,17 @@ func getEnv(key, defaultValue string) string {
 func getEnvAsBool(key string, defaultValue bool) bool {
 	if value, exists := os.LookupEnv(key); exists {
 		return value == "true"
+	}
+	return defaultValue
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	if value, exists := os.LookupEnv(key); exists {
+		conv, err := strconv.Atoi(value)
+		if err != nil {
+			return defaultValue
+		}
+		return conv
 	}
 	return defaultValue
 }

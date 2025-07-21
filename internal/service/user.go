@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,9 +21,9 @@ import (
 
 type UserService interface {
 	Register(request dto.RegisterRequest) (*models.User, error)
-	RegisterOAuth(request dto.RegisterOAuthRequest) (*models.User, error)
-	GetGitHubUser(ctx context.Context, code string) (dto.UserJwtPackage, error)
+	GetGitHubOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error)
 	CreateJWT(claims dto.UserJwtPackage) (string, error)
+	RegisterOAuthUser(jwt dto.UserJwtPackage) error
 }
 
 type userService struct {
@@ -62,35 +63,25 @@ func (r *userService) Register(request dto.RegisterRequest) (*models.User, error
 	return user, nil
 }
 
-func (r *userService) RegisterOAuth(request dto.RegisterOAuthRequest) (*models.User, error) {
-	_, err := r.userRepo.GetUserByUsername(request.Username)
-	if !errors.Is(err, sql.ErrNoRows) && err != nil {
-		return nil, err
+func (r *userService) RegisterOAuthUser(jwt dto.UserJwtPackage) error {
+	_, err := r.userRepo.GetUserByOAuthKey(jwt.OAuthKey)
+	if errors.Is(err, sql.ErrNoRows) {
+		user := &models.User{
+			ID:       uuid.NewString(),
+			Username: jwt.Username,
+			OAuthKey: jwt.OAuthKey,
+		}
+
+		r.userRepo.CreateUser(user)
+
+		return nil
 	}
 
-	user := &models.User{
-		ID:            uuid.NewString(),
-		Username:      request.Username,
-		OAuthProvider: request.OAuthProvider,
-		OAuthID:       request.OAuthID,
-		AccessToken:   request.AccessToken,
-		RefreshToken:  request.RefreshToken,
-		TokenExpiry:   request.TokenExpiry,
-	}
-
-	err = r.userRepo.CreateUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return err
 }
 
-func (s *userService) GetGitHubUser(ctx context.Context, code string) (dto.UserJwtPackage, error) {
-	cfg, err := provider.LoadGithubOAuthConfig()
-	if err != nil {
-		return dto.UserJwtPackage{}, err
-	}
+func (s *userService) GetGitHubOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error) {
+	cfg := provider.LoadGithubOAuthConfig()
 
 	tok, err := cfg.Exchange(ctx, code)
 	if err != nil {
@@ -114,6 +105,7 @@ func (s *userService) GetGitHubUser(ctx context.Context, code string) (dto.UserJ
 		Username:  user.Login,
 		UserID:    user.ID,
 		AvatarURL: user.AvatarURL,
+		OAuthKey:  fmt.Sprintf("github_%d", user.ID),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 			Issuer:    s.conf.Issuer,

@@ -3,12 +3,12 @@ package middleware
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/vaporii/v8box/internal/config"
 	"github.com/vaporii/v8box/internal/dto"
+	"github.com/vaporii/v8box/internal/logging"
 )
 
 type userAuthKeyType string
@@ -45,11 +45,8 @@ func Auth(next http.Handler) http.Handler {
 }
 
 func checkErr(err error, w http.ResponseWriter, statusText string, statusCode int) bool {
-	conf := config.LoadConfig()
 	if err != nil {
-		if conf.Environment == "dev" {
-			fmt.Printf("err: %v\n", err)
-		}
+		logging.Warning("HTTP error: %d %s err: %v", statusCode, statusText, err)
 		http.Error(w, statusText, statusCode)
 		return true
 	}

@@ -10,18 +10,20 @@ import (
 	"github.com/vaporii/v8box/internal/middleware"
 
 	"github.com/vaporii/v8box/internal/handler"
-	"github.com/vaporii/v8box/internal/repository"
-	"github.com/vaporii/v8box/internal/service"
 )
 
 func main() {
 	cfg := config.LoadConfig()
 
-	r, err := setupRouter(cfg)
+	r := chi.NewRouter()
+
+	routes, err := setupRouter(cfg)
 	if err != nil {
 		log.Fatalf("err: %v\n", err)
 		return
 	}
+
+	r.Mount("/api/v1", routes)
 
 	http.ListenAndServe(cfg.ServerAddress, r)
 }
@@ -33,24 +35,20 @@ func setupRouter(cfg *config.Config) (*chi.Mux, error) {
 	if err != nil {
 		return nil, err
 	}
-	userRepo, err := repository.NewUserRepository(db)
-	if err != nil {
-		return nil, err
-	}
-	userService := service.NewUserService(userRepo, *config.LoadConfig())
-	userHandler := handler.NewUserHandler(userService)
 
-	noteRepo, err := repository.NewNoteRepository(db)
-	if err != nil {
-		return nil, err
-	}
-	noteService := service.NewNoteService(noteRepo)
-	_ = handler.NewNoteHandler(noteService)
+	handlers := handler.NewHandlers(db, *config.LoadConfig())
 
-	r.Post("/register", userHandler.Register)
-	r.Get("/register/oauth", userHandler.GitHubOAuthLogin)
+	r.Mount("/auth", setupAuthRoutes(handlers.UserHandler))
+
+	return r, nil
+}
+
+func setupAuthRoutes(userHandler handler.UserHandler) *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Get("/register/github", userHandler.GitHubOAuthLogin)
 	r.Get("/callback", userHandler.GitHubOAuthCallback)
 	r.With(middleware.Auth).Get("/user", userHandler.GetUser)
 
-	return r, nil
+	return r
 }

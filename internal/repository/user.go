@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/vaporii/v8box/internal/logging"
 	"github.com/vaporii/v8box/internal/models"
 
 	_ "modernc.org/sqlite"
@@ -11,6 +12,7 @@ import (
 type UserRepository interface {
 	CreateUser(user *models.User) error
 	GetUserByUsername(username string) (*models.User, error)
+	GetUserByOAuthKey(oauthKey string) (*models.User, error)
 }
 
 type userRepository struct {
@@ -18,21 +20,19 @@ type userRepository struct {
 }
 
 func NewUserRepository(db *sql.DB) (UserRepository, error) {
+	logging.Info("creating users table")
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id             	VARCHAR(255) PRIMARY KEY,
 			username       	VARCHAR(50) NOT NULL UNIQUE,
 			password_hash  	TEXT NOT NULL,
-			oauth_provider 	VARCHAR(255),
-			oauth_id		TEXT,
-			access_token	TEXT,
-			refresh_token	TEXT,
-			token_expiry	INTEGER
+			oauth_key		TEXT UNIQUE
 		);
 	`)
 	if err != nil {
 		return nil, err
 	}
+	logging.Verbose("created users table")
 
 	return &userRepository{
 		db: db,
@@ -40,21 +40,14 @@ func NewUserRepository(db *sql.DB) (UserRepository, error) {
 }
 
 func (r *userRepository) CreateUser(user *models.User) error {
+	logging.Verbose("creating user")
 	_, err := r.db.Exec(`
 		INSERT INTO users (
 			id,
 			username,
 			password_hash,
-			oauth_provider,
-			oauth_id,
-			access_token,
-			refresh_token,
-			token_expiry
+			oauth_key
 		) VALUES (
-			?,
-			?,
-			?,
-			?,
 			?,
 			?,
 			?,
@@ -64,45 +57,60 @@ func (r *userRepository) CreateUser(user *models.User) error {
 		user.ID,
 		user.Username,
 		user.Password,
-		user.OAuthProvider,
-		user.OAuthID,
-		user.AccessToken,
-		user.RefreshToken,
-		user.TokenExpiry,
+		user.OAuthKey,
 	)
 	if err != nil {
 		return err
 	}
+	logging.Verbose("created user")
 
 	return nil
 }
 
 func (r *userRepository) GetUserByUsername(username string) (*models.User, error) {
 	user := &models.User{}
+	logging.Verbose("getting user by username")
 	err := r.db.QueryRow(`
 		SELECT
 			id,
 			username,
-			password,
-			oauth_provider,
-			oauth_id,
-			access_token,
-			refresh_token,
-			token_expiry
+			password_hash,
+			oauth_key
 		FROM users WHERE username=?
 	`, username).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Password,
-		&user.OAuthProvider,
-		&user.OAuthID,
-		&user.AccessToken,
-		&user.RefreshToken,
-		&user.TokenExpiry,
+		&user.OAuthKey,
 	)
 	if err != nil {
 		return nil, err
 	}
+	logging.Verbose("got user by username")
+
+	return user, nil
+}
+
+func (r *userRepository) GetUserByOAuthKey(oauthKey string) (*models.User, error) {
+	user := &models.User{}
+	logging.Verbose("getting user by oauth key")
+	err := r.db.QueryRow(`
+		SELECT
+			id,
+			username,
+			password_hash,
+			oauth_key
+		FROM users WHERE oauth_key=?
+	`, oauthKey).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Password,
+		&user.OAuthKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+	logging.Verbose("got user by oauth key")
 
 	return user, nil
 }

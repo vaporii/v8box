@@ -17,23 +17,20 @@ type OauthConfig struct {
 var githubOAuthConfig *oauth2.Config
 
 // TODO: errors for null vals
-func LoadGithubConfig() (OauthConfig, error) {
+func LoadGithubConfig() OauthConfig {
 	return OauthConfig{
 		ProviderName: "github",
 		ClientID:     getEnv("V8BOX_GITHUB_CLIENT_ID", ""),
 		ClientSecret: getEnv("V8BOX_GITHUB_CLIENT_SECRET", ""),
 		RedirectURL:  getEnv("V8BOX_GITHUB_REDIRECT_URL", ""),
-	}, nil
+	}
 }
 
-func LoadGithubOAuthConfig() (*oauth2.Config, error) {
+func LoadGithubOAuthConfig() *oauth2.Config {
 	if githubOAuthConfig != nil {
-		return githubOAuthConfig, nil
+		return githubOAuthConfig
 	}
-	cfg, err := LoadGithubConfig()
-	if err != nil {
-		return nil, err
-	}
+	cfg := LoadGithubConfig()
 
 	config := &oauth2.Config{
 		ClientID:     cfg.ClientID,
@@ -44,7 +41,7 @@ func LoadGithubOAuthConfig() (*oauth2.Config, error) {
 	}
 	githubOAuthConfig = config
 
-	return config, nil
+	return config
 }
 
 func getEnv(key, defaultValue string) string {
