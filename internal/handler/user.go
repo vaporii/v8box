@@ -10,7 +10,7 @@ import (
 )
 
 type UserHandler interface {
-	GetUser(w http.ResponseWriter, r *http.Request)
+	GetCurrentUser(w http.ResponseWriter, r *http.Request)
 }
 
 type userHandler struct {
@@ -23,7 +23,7 @@ func NewUserHandler(userService service.UserService) UserHandler {
 	}
 }
 
-func (h *userHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	encoder := json.NewEncoder(w)
