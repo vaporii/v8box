@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	"github.com/vaporii/v8box/internal/dto"
+	"github.com/vaporii/v8box/internal/models"
 	"github.com/vaporii/v8box/internal/service"
 )
 
 type NoteHandler interface {
 	Create(w http.ResponseWriter, r *http.Request)
+	GetNotes(w http.ResponseWriter, r *http.Request)
 }
 
 type noteHandler struct {
@@ -37,4 +39,16 @@ func (h *noteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(*note)
+}
+
+func (h *noteHandler) GetNotes(w http.ResponseWriter, r *http.Request) {
+	notes, err := h.noteService.GetUserNotes(models.ExtractUser(r).ID)
+	if checkErr(err, w, http.StatusText(500), 500) {
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(notes)
+	if checkErr(err, w, http.StatusText(500), 500) {
+		return
+	}
 }

@@ -11,6 +11,7 @@ import (
 type NoteRepository interface {
 	CreateNote(user *models.Note) error
 	GetNoteByID(string int) (*models.Note, error)
+	GetUserNotes(userId string) ([]models.Note, error)
 }
 
 type noteRepository struct {
@@ -53,4 +54,26 @@ func (r *noteRepository) GetNoteByID(id int) (*models.Note, error) {
 	}
 
 	return note, nil
+}
+
+func (r *noteRepository) GetUserNotes(userId string) ([]models.Note, error) {
+	rows, err := r.db.Query("SELECT id, user_id, title, content FROM notes WHERE user_id=?", userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var notes []models.Note
+
+	for rows.Next() {
+		var note models.Note
+		if err := rows.Scan(&note.ID, &note.UserID, &note.Title, &note.Content); err != nil {
+			return notes, err
+		}
+		notes = append(notes, note)
+	}
+	if err = rows.Err(); err != nil {
+		return notes, err
+	}
+	return notes, nil
 }

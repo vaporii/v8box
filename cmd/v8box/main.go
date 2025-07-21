@@ -39,9 +39,18 @@ func setupRouter(cfg *config.Config) (*chi.Mux, error) {
 	handlers := handler.NewHandlers(db, *config.LoadConfig())
 
 	r.Mount("/auth", setupAuthRoutes(handlers.AuthHandler))
-	r.With(middleware.Auth).Get("/me", handlers.UserHandler.GetCurrentUser)
+	r.Mount("/me", setupMeRoutes(handlers))
 
 	return r, nil
+}
+
+func setupMeRoutes(handlers *handler.Handlers) *chi.Mux {
+	r := chi.NewRouter()
+
+	r.With(middleware.Auth).Get("/", handlers.UserHandler.GetCurrentUser)
+	r.With(middleware.Auth).Get("/note", handlers.NoteHandler.GetNotes)
+
+	return r
 }
 
 func setupAuthRoutes(authHandler handler.AuthHandler) *chi.Mux {

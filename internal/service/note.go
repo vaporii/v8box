@@ -9,6 +9,7 @@ import (
 
 type NoteService interface {
 	Create(request dto.CreateNoteRequest) (*models.Note, error)
+	GetUserNotes(userId string) ([]models.Note, error)
 }
 
 type noteService struct {
@@ -35,4 +36,13 @@ func (s *noteService) Create(request dto.CreateNoteRequest) (*models.Note, error
 	}
 
 	return note, nil
+}
+
+func (s *noteService) GetUserNotes(userId string) ([]models.Note, error) {
+	notes, err := s.noteRepo.GetUserNotes(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return notes, nil
 }
