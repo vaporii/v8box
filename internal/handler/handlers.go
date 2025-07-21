@@ -12,6 +12,7 @@ import (
 type Handlers struct {
 	UserHandler UserHandler
 	NoteHandler NoteHandler
+	AuthHandler AuthHandler
 }
 
 func NewHandlers(db *sql.DB, cfg config.Config) *Handlers {
@@ -30,5 +31,6 @@ func NewHandlers(db *sql.DB, cfg config.Config) *Handlers {
 	return &Handlers{
 		UserHandler: NewUserHandler(service.NewUserService(userRepo, cfg)),
 		NoteHandler: NewNoteHandler(service.NewNoteService(noteRepo)),
+		AuthHandler: NewAuthHandler(service.NewAuthService(userRepo, cfg)),
 	}
 }

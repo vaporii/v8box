@@ -38,17 +38,25 @@ func setupRouter(cfg *config.Config) (*chi.Mux, error) {
 
 	handlers := handler.NewHandlers(db, *config.LoadConfig())
 
-	r.Mount("/auth", setupAuthRoutes(handlers.UserHandler))
+	r.Mount("/auth", setupAuthRoutes(handlers.AuthHandler))
+	r.Mount("/user", setupUserRoutes(handlers.UserHandler))
 
 	return r, nil
 }
 
-func setupAuthRoutes(userHandler handler.UserHandler) *chi.Mux {
+func setupUserRoutes(userHandler handler.UserHandler) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Get("/register/github", userHandler.GitHubOAuthLogin)
-	r.Get("/callback", userHandler.GitHubOAuthCallback)
-	r.With(middleware.Auth).Get("/user", userHandler.GetUser)
+	r.With(middleware.Auth).Get("/", userHandler.GetUser)
+
+	return r
+}
+
+func setupAuthRoutes(authHandler handler.AuthHandler) *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Get("/register/github", authHandler.GitHubOAuthLogin)
+	r.Get("/callback", authHandler.GitHubOAuthCallback)
 
 	return r
 }
