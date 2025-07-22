@@ -43,7 +43,7 @@ func (s *noteService) Create(request dto.CreateNoteRequest) (*models.Note, error
 		Content: request.Content,
 	}
 
-	err := s.noteRepo.CreateNote(note)
+	note, err := s.noteRepo.CreateNote(note)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (s *noteService) GetNoteByID(id string) (*models.Note, error) {
 }
 
 func (s *noteService) EditNoteByID(id string, request dto.CreateNoteRequest) (*models.Note, error) {
-	note, err := s.noteRepo.GetNoteByID(id)
+	_, err := s.noteRepo.GetNoteByID(id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &httperror.NotFoundError{Entity: "Note"}
@@ -81,13 +81,10 @@ func (s *noteService) EditNoteByID(id string, request dto.CreateNoteRequest) (*m
 		return nil, err
 	}
 
-	err = s.noteRepo.UpdateNote(id, request)
+	note, err := s.noteRepo.UpdateNote(id, request)
 	if err != nil {
 		return nil, err
 	}
-
-	note.Title = request.Title
-	note.Content = request.Content
 
 	return note, nil
 }

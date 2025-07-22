@@ -16,15 +16,15 @@ type Handlers struct {
 }
 
 func NewHandlers(db *sql.DB, cfg config.Config) *Handlers {
-	userRepo, err := repository.NewUserRepository(db)
-	if err != nil {
-		log.Fatalf("err setting up user repository: %v\n", err)
-		return nil
-	}
-
 	noteRepo, err := repository.NewNoteRepository(db)
 	if err != nil {
 		log.Fatalf("err setting up note repository: %v\n", err)
+		return nil
+	}
+
+	userRepo, err := repository.NewUserRepository(db)
+	if err != nil {
+		log.Fatalf("err setting up user repository: %v\n", err)
 		return nil
 	}
 
