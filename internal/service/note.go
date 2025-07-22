@@ -1,6 +1,9 @@
 package service
 
 import (
+	"database/sql"
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/vaporii/v8box/internal/dto"
 	"github.com/vaporii/v8box/internal/httperror"
@@ -11,6 +14,7 @@ import (
 type NoteService interface {
 	Create(request dto.CreateNoteRequest) (*models.Note, error)
 	GetUserNotes(userId string) ([]models.Note, error)
+	GetNoteByID(id string) (*models.Note, error)
 }
 
 type noteService struct {
@@ -53,4 +57,16 @@ func (s *noteService) GetUserNotes(userId string) ([]models.Note, error) {
 	}
 
 	return notes, nil
+}
+
+func (s *noteService) GetNoteByID(id string) (*models.Note, error) {
+	note, err := s.noteRepo.GetNoteByID(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &httperror.NotFoundError{Entity: "Note"}
+		}
+		return nil, err
+	}
+
+	return note, nil
 }

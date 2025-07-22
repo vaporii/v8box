@@ -11,7 +11,7 @@ import (
 
 type NoteRepository interface {
 	CreateNote(user *models.Note) error
-	GetNoteByID(string int) (*models.Note, error)
+	GetNoteByID(id string) (*models.Note, error)
 	GetUserNotes(userId string) ([]models.Note, error)
 }
 
@@ -47,7 +47,7 @@ func (r *noteRepository) CreateNote(note *models.Note) error {
 	return nil
 }
 
-func (r *noteRepository) GetNoteByID(id int) (*models.Note, error) {
+func (r *noteRepository) GetNoteByID(id string) (*models.Note, error) {
 	note := &models.Note{}
 	err := r.db.QueryRow("SELECT id, user_id, title, content FROM notes WHERE id=?", id).Scan(&note.ID, &note.UserID, &note.Title, &note.Content)
 	if err != nil {

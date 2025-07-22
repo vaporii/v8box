@@ -49,9 +49,12 @@ func setupRouter(cfg *config.Config) (*chi.Mux, error) {
 func setupMeRoutes(handlers *handler.Handlers) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.With(middleware.Auth).Get("/", handlers.UserHandler.GetCurrentUser)
-	r.With(middleware.Auth).Get("/note", handlers.NoteHandler.GetNotes)
-	r.With(middleware.Auth).Post("/note", handlers.NoteHandler.Create)
+	r.Use(middleware.Auth)
+
+	r.Get("/", handlers.UserHandler.GetCurrentUser)
+	r.Get("/note", handlers.NoteHandler.GetNotes)
+	r.Get("/note/{id}", handlers.NoteHandler.GetNoteByID)
+	r.Post("/note", handlers.NoteHandler.Create)
 
 	return r
 }
@@ -59,7 +62,7 @@ func setupMeRoutes(handlers *handler.Handlers) *chi.Mux {
 func setupAuthRoutes(authHandler handler.AuthHandler) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Get("/register/github", authHandler.GitHubOAuthLogin)
+	r.Get("/login/github", authHandler.GitHubOAuthLogin)
 	r.Get("/callback", authHandler.GitHubOAuthCallback)
 
 	return r

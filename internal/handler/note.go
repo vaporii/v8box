@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/vaporii/v8box/internal/dto"
 	"github.com/vaporii/v8box/internal/httperror"
 	"github.com/vaporii/v8box/internal/models"
@@ -13,6 +14,7 @@ import (
 type NoteHandler interface {
 	Create(w http.ResponseWriter, r *http.Request)
 	GetNotes(w http.ResponseWriter, r *http.Request)
+	GetNoteByID(w http.ResponseWriter, r *http.Request)
 }
 
 type noteHandler struct {
@@ -52,10 +54,21 @@ func (h *noteHandler) GetNotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r = r.WithContext(r.Context())
-
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(notes)
+	if checkErr(err, r) {
+		return
+	}
+}
+
+func (h *noteHandler) GetNoteByID(w http.ResponseWriter, r *http.Request) {
+	note, err := h.noteService.GetNoteByID(chi.URLParam(r, "id"))
+	if checkErr(err, r) {
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(note)
 	if checkErr(err, r) {
 		return
 	}
