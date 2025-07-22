@@ -19,7 +19,7 @@ func ErrorHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		logging.Verbose("err: %v", err)
+		logging.Warning("err during HTTP request: %v", err)
 
 		switch t := err.(type) {
 		default:
