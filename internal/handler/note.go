@@ -15,6 +15,7 @@ type NoteHandler interface {
 	Create(w http.ResponseWriter, r *http.Request)
 	GetNotes(w http.ResponseWriter, r *http.Request)
 	GetNoteByID(w http.ResponseWriter, r *http.Request)
+	EditNoteByID(w http.ResponseWriter, r *http.Request)
 }
 
 type noteHandler struct {
@@ -63,6 +64,28 @@ func (h *noteHandler) GetNotes(w http.ResponseWriter, r *http.Request) {
 
 func (h *noteHandler) GetNoteByID(w http.ResponseWriter, r *http.Request) {
 	note, err := h.noteService.GetNoteByID(chi.URLParam(r, "id"))
+	if checkErr(err, r) {
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(note)
+	if checkErr(err, r) {
+		return
+	}
+}
+
+func (h *noteHandler) EditNoteByID(w http.ResponseWriter, r *http.Request) {
+	var noteRequest dto.CreateNoteRequest
+	err := json.NewDecoder(r.Body).Decode(&noteRequest)
+	if err != nil {
+		err = &httperror.BadClientRequestError{Message: "Bad JSON request"}
+	}
+	if checkErr(err, r) {
+		return
+	}
+
+	note, err := h.noteService.EditNoteByID(chi.URLParam(r, "id"), noteRequest)
 	if checkErr(err, r) {
 		return
 	}

@@ -15,6 +15,7 @@ type NoteService interface {
 	Create(request dto.CreateNoteRequest) (*models.Note, error)
 	GetUserNotes(userId string) ([]models.Note, error)
 	GetNoteByID(id string) (*models.Note, error)
+	EditNoteByID(id string, request dto.CreateNoteRequest) (*models.Note, error)
 }
 
 type noteService struct {
@@ -67,6 +68,26 @@ func (s *noteService) GetNoteByID(id string) (*models.Note, error) {
 		}
 		return nil, err
 	}
+
+	return note, nil
+}
+
+func (s *noteService) EditNoteByID(id string, request dto.CreateNoteRequest) (*models.Note, error) {
+	note, err := s.noteRepo.GetNoteByID(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &httperror.NotFoundError{Entity: "Note"}
+		}
+		return nil, err
+	}
+
+	err = s.noteRepo.UpdateNote(id, request)
+	if err != nil {
+		return nil, err
+	}
+
+	note.Title = request.Title
+	note.Content = request.Content
 
 	return note, nil
 }

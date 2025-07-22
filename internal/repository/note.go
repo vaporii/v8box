@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/vaporii/v8box/internal/dto"
 	"github.com/vaporii/v8box/internal/httperror"
 	"github.com/vaporii/v8box/internal/models"
 
@@ -13,6 +14,7 @@ type NoteRepository interface {
 	CreateNote(user *models.Note) error
 	GetNoteByID(id string) (*models.Note, error)
 	GetUserNotes(userId string) ([]models.Note, error)
+	UpdateNote(id string, request dto.CreateNoteRequest) error
 }
 
 type noteRepository struct {
@@ -87,4 +89,12 @@ func (r *noteRepository) GetUserNotes(userId string) ([]models.Note, error) {
 		return notes, err
 	}
 	return notes, nil
+}
+
+func (r *noteRepository) UpdateNote(id string, request dto.CreateNoteRequest) error {
+	_, err := r.db.Exec("UPDATE notes SET title=?, content=? WHERE id=?", request.Title, request.Content, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

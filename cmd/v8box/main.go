@@ -55,6 +55,7 @@ func setupMeRoutes(handlers *handler.Handlers) *chi.Mux {
 	r.Get("/note", handlers.NoteHandler.GetNotes)
 	r.Get("/note/{id}", handlers.NoteHandler.GetNoteByID)
 	r.Post("/note", handlers.NoteHandler.Create)
+	r.Put("/note/{id}", handlers.NoteHandler.EditNoteByID)
 
 	return r
 }
