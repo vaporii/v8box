@@ -23,8 +23,8 @@ func NewNoteRepository(db *sql.DB) (NoteRepository, error) {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS notes (
 			id				VARCHAR(255) PRIMARY KEY,
-			user_id			VARCHAR(255),
-			title			VARCHAR(255),
+			user_id			VARCHAR(255) NOT NULL,
+			title			VARCHAR(255) NOT NULL,
 			content			TEXT,
 			FOREIGN KEY(user_id) REFERENCES users(id)
 		);

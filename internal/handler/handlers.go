@@ -28,9 +28,10 @@ func NewHandlers(db *sql.DB, cfg config.Config) *Handlers {
 		return nil
 	}
 
+	userService := service.NewUserService(userRepo, cfg)
 	return &Handlers{
-		UserHandler: NewUserHandler(service.NewUserService(userRepo, cfg)),
-		NoteHandler: NewNoteHandler(service.NewNoteService(noteRepo)),
+		UserHandler: NewUserHandler(userService),
+		NoteHandler: NewNoteHandler(service.NewNoteService(noteRepo, userService)),
 		AuthHandler: NewAuthHandler(service.NewAuthService(userRepo, cfg)),
 	}
 }

@@ -51,6 +51,7 @@ func setupMeRoutes(handlers *handler.Handlers) *chi.Mux {
 
 	r.With(middleware.Auth).Get("/", handlers.UserHandler.GetCurrentUser)
 	r.With(middleware.Auth).Get("/note", handlers.NoteHandler.GetNotes)
+	r.With(middleware.Auth).Post("/note", handlers.NoteHandler.Create)
 
 	return r
 }

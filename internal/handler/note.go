@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/vaporii/v8box/internal/dto"
+	"github.com/vaporii/v8box/internal/httperror"
 	"github.com/vaporii/v8box/internal/models"
 	"github.com/vaporii/v8box/internal/service"
 )
@@ -28,13 +29,16 @@ func (h *noteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var noteRequest dto.CreateNoteRequest
 	err := json.NewDecoder(r.Body).Decode(&noteRequest)
 	if err != nil {
-		http.Error(w, http.StatusText(400), 400)
+		err = &httperror.BadClientRequestError{Message: "Bad JSON request"}
+	}
+	if checkErr(err, r) {
 		return
 	}
 
+	noteRequest.UserID = models.ExtractUser(r).UserID
+
 	note, err := h.noteService.Create(noteRequest)
-	if err != nil {
-		http.Error(w, "Internal Server Error", 500)
+	if checkErr(err, r) {
 		return
 	}
 

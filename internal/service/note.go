@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/vaporii/v8box/internal/dto"
+	"github.com/vaporii/v8box/internal/httperror"
 	"github.com/vaporii/v8box/internal/models"
 	"github.com/vaporii/v8box/internal/repository"
 )
@@ -13,16 +14,23 @@ type NoteService interface {
 }
 
 type noteService struct {
-	noteRepo repository.NoteRepository
+	noteRepo    repository.NoteRepository
+	userService UserService
 }
 
-func NewNoteService(noteRepo repository.NoteRepository) NoteService {
+func NewNoteService(noteRepo repository.NoteRepository, userService UserService) NoteService {
 	return &noteService{
-		noteRepo: noteRepo,
+		noteRepo:    noteRepo,
+		userService: userService,
 	}
 }
 
 func (s *noteService) Create(request dto.CreateNoteRequest) (*models.Note, error) {
+	userExists := s.userService.CheckUserExists(request.UserID)
+	if !userExists {
+		return nil, &httperror.BadClientRequestError{Message: "User with ID doesn't exist"}
+	}
+
 	note := &models.Note{
 		ID:      uuid.NewString(),
 		UserID:  request.UserID,

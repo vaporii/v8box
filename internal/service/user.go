@@ -12,6 +12,7 @@ import (
 
 type UserService interface {
 	GetUser(userId string) (*models.User, error)
+	CheckUserExists(userId string) bool
 }
 
 type userService struct {
@@ -32,4 +33,9 @@ func (s *userService) GetUser(userId string) (*models.User, error) {
 		return nil, &httperror.NotFoundError{Entity: "User"}
 	}
 	return user, err
+}
+
+func (s *userService) CheckUserExists(userId string) bool {
+	_, err := s.userRepo.GetUserById(userId)
+	return err == nil
 }
