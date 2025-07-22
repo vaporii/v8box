@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/vaporii/v8box/internal/httperror"
 	"github.com/vaporii/v8box/internal/models"
 
 	_ "modernc.org/sqlite"
@@ -57,13 +58,23 @@ func (r *noteRepository) GetNoteByID(id int) (*models.Note, error) {
 }
 
 func (r *noteRepository) GetUserNotes(userId string) ([]models.Note, error) {
+	var userCount int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM users WHERE id=?", userId).Scan(&userCount)
+	if err != nil {
+		return nil, err
+	}
+
+	if userCount == 0 {
+		return nil, &httperror.NotFoundError{Entity: "User"}
+	}
+
 	rows, err := r.db.Query("SELECT id, user_id, title, content FROM notes WHERE user_id=?", userId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var notes []models.Note
+	var notes []models.Note = make([]models.Note, 0)
 
 	for rows.Next() {
 		var note models.Note

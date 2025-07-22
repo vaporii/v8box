@@ -17,6 +17,8 @@ func main() {
 
 	r := chi.NewRouter()
 
+	r.Use(middleware.ErrorHandler)
+
 	routes, err := setupRouter(cfg)
 	if err != nil {
 		log.Fatalf("err: %v\n", err)

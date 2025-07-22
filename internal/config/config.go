@@ -25,6 +25,8 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
+	logLevel := logging.LogLevel(getEnvAsInt("V8BOX_LOGGING", int(logging.LogLevelWarning)))
+	logging.SetLogLevel(logLevel)
 	return &Config{
 		TokenDuration:  5 * time.Minute,
 		CookieDuration: 24 * time.Hour,
@@ -37,7 +39,7 @@ func LoadConfig() *Config {
 		SQLitePath:     getEnv("V8BOX_SQLITE_PATH", "./dev.db"),
 		Environment:    getEnv("V8BOX_ENVIRONMENT", "dev"),
 		JwtSecret:      getEnv("V8BOX_JWT_SECRET", ""),
-		Logging:        logging.LogLevel(getEnvAsInt("V8BOX_LOGGING", int(logging.LogLevelWarning))),
+		Logging:        logLevel,
 	}
 }
 

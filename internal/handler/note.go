@@ -38,17 +38,21 @@ func (h *noteHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(*note)
 }
 
 func (h *noteHandler) GetNotes(w http.ResponseWriter, r *http.Request) {
-	notes, err := h.noteService.GetUserNotes(models.ExtractUser(r).ID)
-	if checkErr(err, w, http.StatusText(500), 500) {
+	notes, err := h.noteService.GetUserNotes(models.ExtractUser(r).UserID)
+	if checkErr(err, r) {
 		return
 	}
 
+	r = r.WithContext(r.Context())
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(notes)
-	if checkErr(err, w, http.StatusText(500), 500) {
+	if checkErr(err, r) {
 		return
 	}
 }

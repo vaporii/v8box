@@ -47,18 +47,12 @@ func (h *authHandler) GitHubOAuthLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *authHandler) GitHubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	claims, err := h.authService.GetGitHubOAuthJwt(r.Context(), r.FormValue("code"))
-	if err != nil {
-		checkErr(err, w, http.StatusText(500), 500)
-		return
-	}
-
-	err = h.authService.RegisterOAuthUser(claims)
-	if checkErr(err, w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError) {
+	if checkErr(err, r) {
 		return
 	}
 
 	jwtToken, err := h.authService.CreateJWT(claims)
-	if checkErr(err, w, http.StatusText(500), 500) {
+	if checkErr(err, r) {
 		return
 	}
 

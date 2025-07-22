@@ -23,7 +23,7 @@ type AuthService interface {
 	Register(request dto.RegisterRequest) (*models.User, error)
 	GetGitHubOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error)
 	CreateJWT(claims dto.UserJwtPackage) (string, error)
-	RegisterOAuthUser(jwt dto.UserJwtPackage) error
+	// RegisterOAuthUser(jwt dto.UserJwtPackage) error
 }
 
 type authService struct {
@@ -63,24 +63,7 @@ func (r *authService) Register(request dto.RegisterRequest) (*models.User, error
 	return user, nil
 }
 
-func (r *authService) RegisterOAuthUser(jwt dto.UserJwtPackage) error {
-	_, err := r.userRepo.GetUserByOAuthKey(jwt.OAuthKey)
-	if errors.Is(err, sql.ErrNoRows) {
-		user := &models.User{
-			ID:       uuid.NewString(),
-			Username: jwt.Username,
-			OAuthKey: jwt.OAuthKey,
-		}
-
-		r.userRepo.CreateUser(user)
-
-		return nil
-	}
-
-	return err
-}
-
-func (s *authService) GetGitHubOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error) {
+func (r *authService) GetGitHubOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error) {
 	cfg := provider.LoadGithubOAuthConfig()
 
 	tok, err := cfg.Exchange(ctx, code)
@@ -101,21 +84,41 @@ func (s *authService) GetGitHubOAuthJwt(ctx context.Context, code string) (dto.U
 		return dto.UserJwtPackage{}, err
 	}
 
+	dbUser, err := r.userRepo.GetUserByOAuthKey(fmt.Sprintf("github_%d", user.ID))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			user := &models.User{
+				ID:        uuid.NewString(),
+				Username:  user.Login,
+				OAuthKey:  fmt.Sprintf("github_%d", user.ID),
+				AvatarURL: user.AvatarURL,
+			}
+
+			err = r.userRepo.CreateUser(user)
+			if err != nil {
+				return dto.UserJwtPackage{}, err
+			}
+			dbUser = user
+		} else {
+			return dto.UserJwtPackage{}, err
+		}
+	}
+
 	claims := dto.UserJwtPackage{
-		Username:  user.Login,
-		UserID:    user.ID,
-		AvatarURL: user.AvatarURL,
+		Username:  dbUser.Username,
+		UserID:    dbUser.ID,
+		AvatarURL: dbUser.AvatarURL,
 		OAuthKey:  fmt.Sprintf("github_%d", user.ID),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
-			Issuer:    s.conf.Issuer,
+			Issuer:    r.conf.Issuer,
 		},
 	}
 
 	return claims, nil
 }
 
-func (s *authService) CreateJWT(claims dto.UserJwtPackage) (string, error) {
+func (r *authService) CreateJWT(claims dto.UserJwtPackage) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return t.SignedString([]byte(s.conf.JwtSecret))
+	return t.SignedString([]byte(r.conf.JwtSecret))
 }

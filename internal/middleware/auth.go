@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/vaporii/v8box/internal/config"
 	"github.com/vaporii/v8box/internal/dto"
+	"github.com/vaporii/v8box/internal/httperror"
 	"github.com/vaporii/v8box/internal/logging"
 )
 
@@ -22,21 +23,23 @@ func Auth(next http.Handler) http.Handler {
 		conf := config.LoadConfig()
 
 		cookie, err := r.Cookie("JWT")
-		if checkErr(err, w, "No JWT cookie provided", 401) {
+		// if checkErr(err, w, "No JWT cookie provided", 401) {
+		if checkErr(err, r) {
 			return
 		}
 
 		parsedTok, err := jwt.ParseWithClaims(cookie.Value, &dto.UserJwtPackage{}, func(t *jwt.Token) (any, error) {
 			return []byte(conf.JwtSecret), nil
 		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
-		if checkErr(err, w, "Bad token", 401) {
+		// if checkErr(err, w, "Bad token", 401) {
+		if checkErr(err, r) {
 			return
 		}
 
 		if claims, ok := parsedTok.Claims.(*dto.UserJwtPackage); ok {
 			ctx = context.WithValue(r.Context(), UserAuthContextKey, *claims)
 		} else {
-			checkErr(errors.New("claims not ok"), w, "Internal Server Error", 500)
+			checkErr(errors.New("claims not ok"), r)
 			return
 		}
 
@@ -44,10 +47,12 @@ func Auth(next http.Handler) http.Handler {
 	})
 }
 
-func checkErr(err error, w http.ResponseWriter, statusText string, statusCode int) bool {
+func checkErr(err error, r *http.Request) bool {
 	if err != nil {
-		logging.Warning("HTTP error: %d %s err: %v", statusCode, statusText, err)
-		http.Error(w, statusText, statusCode)
+		ctx := context.WithValue(r.Context(), httperror.ErrorKey, err)
+		*r = *r.WithContext(ctx)
+		logging.Warning("HTTP Auth error: %v", err)
+
 		return true
 	}
 	return false
