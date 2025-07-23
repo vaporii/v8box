@@ -32,7 +32,7 @@ func NewUserRepository(db *sql.DB) (UserRepository, error) {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id				VARCHAR(255) PRIMARY KEY,
-			username		VARCHAR(50) NOT NULL,
+			username		TEXT NOT NULL,
 			password_hash	TEXT NOT NULL,
 			oauth_key		TEXT UNIQUE,
 			avatar_url		TEXT,

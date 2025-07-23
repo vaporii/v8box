@@ -17,11 +17,14 @@ import (
 	githubprovider "github.com/vaporii/v8box/internal/models/github_provider"
 	"github.com/vaporii/v8box/internal/repository"
 	"github.com/vaporii/v8box/internal/security"
+	"google.golang.org/api/oauth2/v2"
+	"google.golang.org/api/option"
 )
 
 type AuthService interface {
 	Register(request dto.RegisterRequest) (*models.User, error)
 	GetGitHubOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error)
+	GetGoogleOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error)
 	CreateJWT(claims dto.UserJwtPackage) (string, error)
 	// RegisterOAuthUser(jwt dto.UserJwtPackage) error
 }
@@ -109,6 +112,59 @@ func (r *authService) GetGitHubOAuthJwt(ctx context.Context, code string) (dto.U
 		UserID:    dbUser.ID,
 		AvatarURL: dbUser.AvatarURL,
 		OAuthKey:  fmt.Sprintf("github_%d", user.ID),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			Issuer:    r.conf.Issuer,
+		},
+	}
+
+	return claims, nil
+}
+
+func (r *authService) GetGoogleOAuthJwt(ctx context.Context, code string) (dto.UserJwtPackage, error) {
+	cfg := provider.LoadGoogleOAuthConfig()
+
+	tok, err := cfg.Exchange(ctx, code)
+	if err != nil {
+		return dto.UserJwtPackage{}, err
+	}
+
+	// client := cfg.Client(ctx, tok)
+	svc, err := oauth2.NewService(ctx, option.WithTokenSource(cfg.TokenSource(ctx, tok)))
+	if err != nil {
+		return dto.UserJwtPackage{}, err
+	}
+
+	user, err := svc.Userinfo.V2.Me.Get().Do()
+	if err != nil {
+		return dto.UserJwtPackage{}, err
+	}
+
+	dbUser, err := r.userRepo.GetUserByOAuthKey(fmt.Sprintf("google_%s", user.Id))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			user := &models.User{
+				ID:        uuid.NewString(),
+				Username:  user.Name,
+				OAuthKey:  fmt.Sprintf("google_%s", user.Id),
+				AvatarURL: user.Picture,
+			}
+
+			err = r.userRepo.CreateUser(user)
+			if err != nil {
+				return dto.UserJwtPackage{}, err
+			}
+			dbUser = user
+		} else {
+			return dto.UserJwtPackage{}, err
+		}
+	}
+
+	claims := dto.UserJwtPackage{
+		Username:  dbUser.Username,
+		UserID:    dbUser.ID,
+		AvatarURL: dbUser.AvatarURL,
+		OAuthKey:  fmt.Sprintf("google_%s", user.Id),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 			Issuer:    r.conf.Issuer,

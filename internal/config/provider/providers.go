@@ -5,6 +5,7 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/google"
 )
 
 type OauthConfig struct {
@@ -14,6 +15,7 @@ type OauthConfig struct {
 	RedirectURL  string
 }
 
+var googleOAuthConfig *oauth2.Config
 var githubOAuthConfig *oauth2.Config
 
 // TODO: errors for null vals
@@ -40,6 +42,33 @@ func LoadGithubOAuthConfig() *oauth2.Config {
 		Endpoint:     github.Endpoint,
 	}
 	githubOAuthConfig = config
+
+	return config
+}
+
+func LoadGoogleConfig() OauthConfig {
+	return OauthConfig{
+		ProviderName: "google",
+		ClientID:     getEnv("V8BOX_GOOGLE_CLIENT_ID", ""),
+		ClientSecret: getEnv("V8BOX_GOOGLE_CLIENT_SECRET", ""),
+		RedirectURL:  getEnv("V8BOX_GOOGLE_REDIRECT_URL", ""),
+	}
+}
+
+func LoadGoogleOAuthConfig() *oauth2.Config {
+	if googleOAuthConfig != nil {
+		return googleOAuthConfig
+	}
+	cfg := LoadGoogleConfig()
+
+	config := &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		RedirectURL:  cfg.RedirectURL,
+		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile"},
+		Endpoint:     google.Endpoint,
+	}
+	googleOAuthConfig = config
 
 	return config
 }

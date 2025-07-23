@@ -15,6 +15,8 @@ type AuthHandler interface {
 	Register(w http.ResponseWriter, r *http.Request)
 	GitHubOAuthLogin(w http.ResponseWriter, r *http.Request)
 	GitHubOAuthCallback(w http.ResponseWriter, r *http.Request)
+	GoogleOAuthLogin(w http.ResponseWriter, r *http.Request)
+	GoogleOAuthCallback(w http.ResponseWriter, r *http.Request)
 }
 
 type authHandler struct {
@@ -47,6 +49,28 @@ func (h *authHandler) GitHubOAuthLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *authHandler) GitHubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	claims, err := h.authService.GetGitHubOAuthJwt(r.Context(), r.FormValue("code"))
+	if checkErr(err, r) {
+		return
+	}
+
+	jwtToken, err := h.authService.CreateJWT(claims)
+	if checkErr(err, r) {
+		return
+	}
+
+	w.Header().Set("Set-Cookie", fmt.Sprintf("JWT=%s; Path=/", jwtToken))
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *authHandler) GoogleOAuthLogin(w http.ResponseWriter, r *http.Request) {
+	cfg := provider.LoadGoogleOAuthConfig()
+
+	stateToken := security.GenerateStateToken()
+	http.Redirect(w, r, cfg.AuthCodeURL(stateToken), http.StatusFound)
+}
+
+func (h *authHandler) GoogleOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	claims, err := h.authService.GetGoogleOAuthJwt(r.Context(), r.FormValue("code"))
 	if checkErr(err, r) {
 		return
 	}

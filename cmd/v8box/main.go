@@ -64,7 +64,9 @@ func setupAuthRoutes(authHandler handler.AuthHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/login/github", authHandler.GitHubOAuthLogin)
-	r.Get("/callback", authHandler.GitHubOAuthCallback)
+	r.Get("/callback/github", authHandler.GitHubOAuthCallback)
+	r.Get("/login/google", authHandler.GoogleOAuthLogin)
+	r.Get("/callback/google", authHandler.GoogleOAuthCallback)
 
 	return r
 }
