@@ -36,14 +36,7 @@ func (s *noteService) Create(request dto.CreateNoteRequest) (*models.Note, error
 		return nil, &httperror.BadClientRequestError{Message: "User with ID doesn't exist"}
 	}
 
-	note := &models.Note{
-		ID:      uuid.NewString(),
-		UserID:  request.UserID,
-		Title:   request.Title,
-		Content: request.Content,
-	}
-
-	note, err := s.noteRepo.CreateNote(note)
+	note, err := s.noteRepo.CreateNote(uuid.NewString(), &request)
 	if err != nil {
 		return nil, err
 	}

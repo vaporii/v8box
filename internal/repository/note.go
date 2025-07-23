@@ -13,7 +13,7 @@ import (
 )
 
 type NoteRepository interface {
-	CreateNote(note *models.Note) (*models.Note, error)
+	CreateNote(id string, note *dto.CreateNoteRequest) (*models.Note, error)
 	GetNoteByID(id string) (*models.Note, error)
 	GetUserNotes(userId string) ([]models.Note, error)
 	UpdateNote(id string, request dto.CreateNoteRequest) (*models.Note, error)
@@ -59,14 +59,14 @@ func NewNoteRepository(db *sql.DB) (NoteRepository, error) {
 	}, nil
 }
 
-func (r *noteRepository) CreateNote(note *models.Note) (*models.Note, error) {
+func (r *noteRepository) CreateNote(id string, note *dto.CreateNoteRequest) (*models.Note, error) {
 	var retNote models.Note
 	err := r.db.QueryRow(`
 		INSERT INTO notes (
 			id, user_id, title, content
 		) VALUES (?, ?, ?, ?) RETURNING
 			id, user_id, title, content, created_at, updated_at;
-	`, note.ID, note.UserID, note.Title, note.Content).Scan(&retNote.ID, &retNote.UserID, &retNote.Title, &retNote.Content, &retNote.CreatedAt, &retNote.UpdatedAt)
+	`, id, note.UserID, note.Title, note.Content).Scan(&retNote.ID, &retNote.UserID, &retNote.Title, &retNote.Content, &retNote.CreatedAt, &retNote.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
