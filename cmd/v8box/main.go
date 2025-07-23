@@ -57,6 +57,12 @@ func setupMeRoutes(handlers *handler.Handlers) *chi.Mux {
 	r.Post("/note", handlers.NoteHandler.Create)
 	r.Put("/note/{id}", handlers.NoteHandler.EditNoteByID)
 
+	r.Get("/note/{note_id}/tag", handlers.TagHandler.GetTagsOnNote)
+	r.Get("/tag/{tag_id}/note", handlers.TagHandler.GetNotesWithTag)
+	r.Post("/tag", handlers.TagHandler.Create)
+	r.Put("/tag/{id}", handlers.TagHandler.EditTag)
+	r.Get("/tag/{id}", handlers.TagHandler.GetTag)
+
 	return r
 }
 

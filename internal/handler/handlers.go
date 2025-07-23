@@ -13,6 +13,7 @@ type Handlers struct {
 	UserHandler UserHandler
 	NoteHandler NoteHandler
 	AuthHandler AuthHandler
+	TagHandler  TagHandler
 }
 
 func NewHandlers(db *sql.DB, cfg config.Config) *Handlers {
@@ -28,10 +29,17 @@ func NewHandlers(db *sql.DB, cfg config.Config) *Handlers {
 		return nil
 	}
 
+	tagRepo, err := repository.NewTagRepository(db)
+	if err != nil {
+		log.Fatalf("err setting up tag repository: %v\n", err)
+		return nil
+	}
+
 	userService := service.NewUserService(userRepo, cfg)
 	return &Handlers{
 		UserHandler: NewUserHandler(userService),
 		NoteHandler: NewNoteHandler(service.NewNoteService(noteRepo, userService)),
 		AuthHandler: NewAuthHandler(service.NewAuthService(userRepo, cfg)),
+		TagHandler:  NewTagHandler(service.NewTagService(tagRepo, userService)),
 	}
 }

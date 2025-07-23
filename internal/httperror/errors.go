@@ -21,3 +21,11 @@ type BadClientRequestError struct {
 func (e *BadClientRequestError) Error() string {
 	return e.Message
 }
+
+type UnauthorizedError struct {
+	Message string
+}
+
+func (e *UnauthorizedError) Error() string {
+	return e.Message
+}
