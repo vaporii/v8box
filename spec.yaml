@@ -1,0 +1,467 @@
+openapi: 3.0.0
+info:
+  title: User Notes API
+  version: 1.0.0
+  description: API for managing user notes and tags with authentication via OAuth.
+
+servers:
+  - url: https://fluffy-space-engine-qr5rwxvp945249r-3000.app.github.dev/api/v1
+
+paths:
+  /me:
+    get:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Return currently logged in user info
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /me/notes:
+    get:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Get current user notes
+      responses:
+        '200':
+          description: List of user notes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Create a note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNoteRequest'
+      responses:
+        '201':
+          description: Note created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/NoteTitleCollision'
+
+  /me/notes/{id}:
+    get:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Get note by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the note to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Note retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NoteNotFound'
+
+    put:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Edit note by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the note to edit
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNoteRequest'
+      responses:
+        '200':
+          description: Note updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NoteNotFound'
+        '409':
+          $ref: '#/components/responses/NoteTitleCollision'
+
+  /me/notes/{id}/tags:
+    get:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Get all tags on a note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the note to get tags for
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tags retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NoteNotFound'
+
+  /me/tags/{id}/notes:
+    get:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Get all notes with tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the tag to get notes for
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TagNotFound'
+
+  /me/tags:
+    post:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Create a tag on user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '201':
+          description: Tag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/TagNameCollision'
+
+  /me/tags/{id}:
+    put:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Edit a tag by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the tag to edit
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '200':
+          description: Tag updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TagNotFound'
+        '409':
+          $ref: '#/components/responses/TagNameCollision'
+
+    get:
+      tags:
+        - me
+      security:
+        - jwtAuth: []
+      summary: Get a tag by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the tag to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tag retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TagNotFound'
+
+  /auth/login/github:
+    get:
+      tags:
+        - auth
+      summary: Login with GitHub using OAuth
+      responses:
+        '302':
+          description: Redirect to GitHub for authentication
+
+  /auth/callback/github:
+    get:
+      tags:
+        - auth
+      summary: GitHub OAuth callback
+      responses:
+        '200':
+          description: User authenticated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /auth/login/google:
+    get:
+      tags:
+        - auth
+      summary: Login with Google using OAuth
+      responses:
+        '302':
+          description: Redirect to Google for authentication
+
+  /auth/callback/google:
+    get:
+      tags:
+        - auth
+      summary: Google OAuth callback
+      responses:
+        '200':
+          description: User authenticated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+components:
+  responses:
+    Unauthorized:
+      description: User not logged in or token invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Unauthorized access. Please log in."
+    NoteTitleCollision:
+      description: Note with title already exists
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Note with title already exists. Please try a different title."
+    NoteNotFound:
+      description: Note with ID wasn't found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Note with ID wasn't found."
+    TagNameCollision:
+      description: Tag with name already exists
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Tag with name already exists. Please try a different name."
+    TagNotFound:
+      description: "Tag with ID wasn't found"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Tag with ID wasn't found."
+  securitySchemes:
+    jwtAuth:
+      type: apiKey
+      in: cookie
+      name: JWT
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - username
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        oauth_key:
+          type: string
+        avatar_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Note:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateNoteRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+
+    Tag:
+      type: object
+      required:
+        - id
+        - user_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateTagRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+
+
+

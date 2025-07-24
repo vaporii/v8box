@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/vaporii/v8box/internal/dto"
+	"github.com/vaporii/v8box/internal/models"
 	"github.com/vaporii/v8box/internal/service"
 )
 
@@ -32,11 +32,12 @@ func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
 	tagRequest := dto.Tag{}
 	json.NewDecoder(r.Body).Decode(&tagRequest)
 
-	tag, err := h.tagService.CreateTag(uuid.NewString(), tagRequest)
+	tag, err := h.tagService.CreateTag(models.ExtractUser(r).UserID, tagRequest)
 	if checkErr(err, r) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(tag)
 	if checkErr(err, r) {
 		return
@@ -52,6 +53,7 @@ func (h *tagHandler) EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(tag)
 	if checkErr(err, r) {
 		return
@@ -64,6 +66,7 @@ func (h *tagHandler) GetTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(tag)
 	if checkErr(err, r) {
 		return

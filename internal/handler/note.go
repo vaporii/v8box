@@ -38,9 +38,7 @@ func (h *noteHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	noteRequest.UserID = models.ExtractUser(r).UserID
-
-	note, err := h.noteService.Create(noteRequest)
+	note, err := h.noteService.Create(models.ExtractUser(r).UserID, noteRequest)
 	if checkErr(err, r) {
 		return
 	}

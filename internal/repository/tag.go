@@ -39,7 +39,7 @@ func NewTagRepository(db *sql.DB) (TagRepository, error) {
 		CREATE TABLE IF NOT EXISTS tags (
 			id			VARCHAR(255) PRIMARY KEY,
 			user_id		VARCHAR(255),
-			name		TEXT NOT NULL UNIQUE,
+			name		TEXT,
 			description	TEXT,
 			created_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP

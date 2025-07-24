@@ -28,6 +28,8 @@ func ErrorHandler(next http.Handler) http.Handler {
 			httpError(w, t.Error(), 404)
 		case *httperror.BadClientRequestError:
 			httpError(w, t.Error(), 400)
+		case *httperror.UnauthorizedError:
+			httpError(w, t.Error(), 401)
 		}
 	})
 }

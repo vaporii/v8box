@@ -52,16 +52,16 @@ func setupMeRoutes(handlers *handler.Handlers) *chi.Mux {
 	r.Use(middleware.Auth)
 
 	r.Get("/", handlers.UserHandler.GetCurrentUser)
-	r.Get("/note", handlers.NoteHandler.GetNotes)
-	r.Get("/note/{id}", handlers.NoteHandler.GetNoteByID)
-	r.Post("/note", handlers.NoteHandler.Create)
-	r.Put("/note/{id}", handlers.NoteHandler.EditNoteByID)
+	r.Get("/notes", handlers.NoteHandler.GetNotes)
+	r.Get("/notes/{id}", handlers.NoteHandler.GetNoteByID)
+	r.Post("/notes", handlers.NoteHandler.Create)
+	r.Put("/notes/{id}", handlers.NoteHandler.EditNoteByID)
 
-	r.Get("/note/{note_id}/tag", handlers.TagHandler.GetTagsOnNote)
-	r.Get("/tag/{tag_id}/note", handlers.TagHandler.GetNotesWithTag)
-	r.Post("/tag", handlers.TagHandler.Create)
-	r.Put("/tag/{id}", handlers.TagHandler.EditTag)
-	r.Get("/tag/{id}", handlers.TagHandler.GetTag)
+	r.Get("/notes/{note_id}/tags", handlers.TagHandler.GetTagsOnNote)
+	r.Get("/tags/{tag_id}/notes", handlers.TagHandler.GetNotesWithTag)
+	r.Post("/tags", handlers.TagHandler.Create)
+	r.Put("/tags/{id}", handlers.TagHandler.EditTag)
+	r.Get("/tags/{id}", handlers.TagHandler.GetTag)
 
 	return r
 }

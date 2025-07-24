@@ -12,7 +12,7 @@ import (
 )
 
 type NoteService interface {
-	Create(request dto.CreateNoteRequest) (*models.Note, error)
+	Create(userID string, request dto.CreateNoteRequest) (*models.Note, error)
 	GetUserNotes(userId string) ([]models.Note, error)
 	GetNoteByID(id string) (*models.Note, error)
 	EditNoteByID(id string, request dto.CreateNoteRequest) (*models.Note, error)
@@ -30,13 +30,13 @@ func NewNoteService(noteRepo repository.NoteRepository, userService UserService)
 	}
 }
 
-func (s *noteService) Create(request dto.CreateNoteRequest) (*models.Note, error) {
-	userExists := s.userService.CheckUserExists(request.UserID)
+func (s *noteService) Create(userID string, request dto.CreateNoteRequest) (*models.Note, error) {
+	userExists := s.userService.CheckUserExists(userID)
 	if !userExists {
 		return nil, &httperror.BadClientRequestError{Message: "User with ID doesn't exist"}
 	}
 
-	note, err := s.noteRepo.CreateNote(uuid.NewString(), &request)
+	note, err := s.noteRepo.CreateNote(uuid.NewString(), userID, &request)
 	if err != nil {
 		return nil, err
 	}

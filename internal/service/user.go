@@ -30,7 +30,7 @@ func NewUserService(userRepo repository.UserRepository, conf config.Config) User
 func (s *userService) GetUser(userId string) (*models.User, error) {
 	user, err := s.userRepo.GetUserById(userId)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, &httperror.NotFoundError{Entity: "User"}
+		return nil, &httperror.UnauthorizedError{Message: "User doesn't exist"}
 	}
 	return user, err
 }
